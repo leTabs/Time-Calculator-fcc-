@@ -1,46 +1,61 @@
-def add_time(start, duration, day = ''):
-    day = day.strip().lower().title()
-    week_days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-    start = start.split()
-    z = start[1]
-    num_of_days = 0
-    arival_day = ''
+def add_time(starter, duration, day = None):
 
-    s_time = start[0].split(':')
-    s_hours = s_time[0]
-    s_minutes = s_time[1]
+    # first given time
+    starter= starter.split()
+    starter_hour, starter_min = starter[0].split(':')[0], starter[0].split(':')[1]
+    half = starter[1]
+    if half == 'PM' and starter_hour != 12:
+        starter_hour = int(starter_hour) + 12
 
+    # second given time
     duration = duration.split(':')
-    d_hours = duration[0]
-    d_minutes = duration[1]
-
-    r_hour = int(s_hours) + int(d_hours)
-    r_mins = int(s_minutes) + int(d_minutes)
-
-    if r_mins >= 60:
-        r_hour += r_mins // 60
-        r_mins -= (r_mins // 60) *60
+    duration_hour, duration_min = duration[0], duration[1]
 
 
-    if r_hour > 12:
-        if start[1] == "PM":
-            z = "AM"
-            num_of_days = r_hour // 24 + 1
-        else: z = "PM"
-        r_hour -= 12 * (r_hour // 12)
-        if r_hour == 0: r_hour = 12
+    # calculate the final minutes
+    final_min = (int(starter_min) + int(duration_min)) % 60
+    if len(str(final_min)) == 1:
+        final_min = '0' + str(final_min)
+    box = (int(starter_min) + int(duration_min)) // 60
 
-    #if num_of_days == 1: num_of_days = 0
-    if day != '':
+    # calculate the final hours
+    final_hour = (int(starter_hour) + int (duration_hour) + box) % 24
 
-        d =week_days.index(day)
-        arival_day_i = d+num_of_days
-        if arival_day_i > 6:
-            arival_day_i -= 6 * (arival_day_i // 6)
+    # configure the final time with the AMs & PMs
+    if final_hour == 0:
+        final_hour = 12
+        half = 'AM'
 
-        arival_day = week_days[arival_day_i]
+    elif final_hour == 12:
+        half = 'PM'
 
+    elif final_hour < 12:
+        half = 'AM'
+    else:
+        final_hour -= 12
+        half = 'PM'
 
-    print(f'{r_hour}:{r_mins} {z} {arival_day}({num_of_days} days later)')
+    # counting the duration of the overall time on days
+    final_day_count = (int(starter_hour) + int(duration_hour) + box) // 24
 
-add_time("6:30 PM", "205:12")
+    # config the sufix
+    if final_day_count == 0:
+        day_declaration = ''
+    elif final_day_count == 1:
+        day_declaration = ' (next day)'
+    else:
+        day_declaration = f' ({final_day_count} days later)'
+
+    # pinpoint the day on wich the resulting hour will take place
+    if day != None:
+        day = day.capitalize().strip()
+        week_days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+        day_indx = week_days.index(day)
+        final_day_indx = (day_indx + final_day_count) % 7
+        final_day = f', {week_days[final_day_indx]}'
+
+    else:
+        final_day = ''
+
+    # return the result
+    return f'{final_hour}:{final_min} {half}{final_day}{day_declaration}'
